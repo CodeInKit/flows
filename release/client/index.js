@@ -78,7 +78,7 @@ export class Flows {
         const data = JSON.parse(JSON.stringify(input));
         if (!this.flows.has(flowName)) {
             console.warn(`${flowName} flow does not exists! Skipped`);
-            return;
+            return input;
         }
         /** pre_flow hook */
         this.hooks.get('pre_flow').forEach(fn => fn({ flowName: flowName, input: data }));
