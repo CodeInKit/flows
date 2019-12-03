@@ -1,5 +1,5 @@
 {
-  "name": "flows",
+  "name": "@codeinkit/flows",
   "version": "1.0.0",
   "description": "",
   "main": "./release/js/index.js",
