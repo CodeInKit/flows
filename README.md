@@ -12,13 +12,13 @@ When writing in flow base architecture every action (function in flow) can stand
 ## Installation
 
 ```
-npm install flows
+npm i @codeinkit/flows
 ```
 
 ## Quick Start
 
 ```js
-const { Flows } = require('flows');
+const { Flows } = require('@codeinkit/flows');
 const flows = new Flows();
 
 function first_action(flowData) {
