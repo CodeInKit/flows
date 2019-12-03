@@ -1,0 +1,27 @@
+{
+  "name": "flows",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./release/js/index.js",
+  "types": "./release/definitions/index.d.ts",
+  "scripts": {
+    "build": "gulp",
+    "test": "jest"
+  },
+  "author": {
+    "name": "codinkit dev team",
+    "email": "dev@codinkit.com"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.2.0",
+    "gulp-typescript": "^5.0.1",
+    "jest": "^24.9.0",
+    "merge2": "^1.3.0",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.6.4"
+  }
+}

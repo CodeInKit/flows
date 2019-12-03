@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "target": "esnext",
+    "noImplicitAny": true,
+    "lib": ["dom", "es2015", "es2016"]
+  }
+}
