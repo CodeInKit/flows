@@ -8,6 +8,7 @@
     "build": "gulp",
     "test": "jest"
   },
+  "keywords": ["flow", "workflow", "flows", "flow based programming", "workflow framework"],
   "author": {
     "name": "codinkit dev team",
     "email": "dev@codinkit.com"
