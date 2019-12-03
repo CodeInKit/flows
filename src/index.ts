@@ -115,7 +115,7 @@ export class Flows {
 
     if(!this.flows.has(flowName)) {
       console.warn(`${flowName} flow does not exists! Skipped`);
-      return;
+      return input;
     }
 
     /** pre_flow hook */
