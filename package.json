@@ -1,6 +1,6 @@
 {
   "name": "@codeinkit/flows",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "./release/js/index.js",
   "types": "./release/definitions/index.d.ts",
