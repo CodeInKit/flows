@@ -97,4 +97,20 @@ describe('flow test', () => {
     await flows.execute('test_flow', {initial: true} as ActionData);
     expect(hook).toBeCalledTimes(flowToTest.length);
   });
+
+  it('should throw on cyclic flow', async () => {
+    const flows = new Flows();
+    flows.register('test_flow', [(data) => ({...data, __flows: {jump:'other_flow'}})]);
+    flows.register('other_flow', [(data) => ({...data, __flows: {jump:'test_flow'}})]);
+
+    expect(flows.execute('test_flow', {initial: true} as ActionData)).rejects.toEqual(new Error('cyclic flow!!, [test_flow, other_flow, test_flow]'))
+  });
+
+  it('should keep the requestId to the end of the flow', async () => {
+    const flows = new Flows();
+    flows.register('test_flow', [(data) => ({...data, other: true}), () => ({somethingElse: 1}) as ActionData]);
+
+    const response = await flows.execute('test_flow', {initial: true, __flows: {requestId: '123'}} as ActionData);
+    expect(response).toMatchObject({somethingElse: 1, __flows: {requestId: '123'}});
+  });
 });

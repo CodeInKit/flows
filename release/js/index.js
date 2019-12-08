@@ -38,13 +38,29 @@ class Flows {
      * @param data the data pass to the flow
      * @param i the index number of the action in the flow
      */
-    async executeRepeat(flowName, data, unsafe, i) {
+    async executeRepeat(flowName, data, unsafe, i, meta = {}) {
         const flow = this.flows.get(flowName);
         const action = flow && flow[i];
         const actionData = JSON.parse(JSON.stringify(data));
-        let nextActionData = {};
+        let nextActionData = { __flows: actionData.__flows };
+        let lastFlow = meta.activated ? meta.activated[meta.activated.length - 1] : null;
+        if (actionData.__flows && actionData.__flows.requestId) {
+            meta.requestId = actionData.__flows.requestId;
+        }
+        if (!lastFlow) {
+            meta.activated = [flowName];
+        }
+        else if (flowName !== lastFlow && meta.activated.indexOf(flowName) === -1) {
+            meta.activated.push(flowName);
+        }
+        else if (flowName !== lastFlow) {
+            throw new Error(`cyclic flow!!, [${meta.activated.join(', ')}, ${flowName}]`);
+        }
         /** post_flow hook */
         if (!flow || !action || (actionData.__flows && actionData.__flows.done)) {
+            if (!actionData.__flows)
+                actionData.__flows = {};
+            actionData.__flows.requestId = meta.requestId;
             this.hooks.get('post_flow').forEach(fn => fn({ flowName, output: actionData }));
             return actionData;
         }
@@ -53,12 +69,13 @@ class Flows {
         try {
             /** execution */
             const result = await this.flows.get(flowName)[i](actionData, unsafe);
-            nextActionData = result || {};
+            Object.assign(nextActionData, result);
             /** exception hook */
         }
         catch (error) {
             this.hooks.get('exception').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error }));
-            nextActionData = { ...actionData, __flows: { error } };
+            Object.assign(nextActionData, actionData);
+            Object.assign(nextActionData.__flows, { error });
             return nextActionData;
         }
         /** post_action hook */
@@ -66,10 +83,10 @@ class Flows {
         /** next action */
         if (nextActionData.__flows && nextActionData.__flows.jump) {
             const jumpTo = nextActionData.__flows.jump;
-            delete nextActionData.__flows;
-            return await this.executeRepeat(jumpTo, nextActionData, unsafe, 0);
+            delete nextActionData.__flows.jump;
+            return await this.executeRepeat(jumpTo, nextActionData, unsafe, 0, meta);
         }
-        return await this.executeRepeat(flowName, nextActionData, unsafe, i + 1);
+        return await this.executeRepeat(flowName, nextActionData, unsafe, i + 1, meta);
     }
     /**
      * start the execution process on a registered flow.

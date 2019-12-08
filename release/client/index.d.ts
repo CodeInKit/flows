@@ -3,6 +3,7 @@ export interface ActionData {
         jump?: string;
         error?: Error;
         done?: boolean;
+        requestId?: string;
     };
 }
 interface HookData {
