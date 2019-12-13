@@ -1,7 +1,10 @@
 {
   "name": "@codeinkit/flows",
   "version": "1.0.6",
-  "description": "",
+  "description": "Flows is a library that aim to make writing code concept flow based.",
+  "repository": {
+    "url": "https://github.com/CodeInKit/flows"
+  },
   "main": "./release/js/index.js",
   "types": "./release/definitions/index.d.ts",
   "scripts": {
@@ -13,7 +16,8 @@
     "workflow",
     "flows",
     "flow based programming",
-    "workflow framework"
+    "workflow framework",
+    "fbp"
   ],
   "author": {
     "name": "codinkit dev team",
