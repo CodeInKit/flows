@@ -1,6 +1,7 @@
 
 export interface IActionData {
   __flows?: {
+    flowName?: string;
     jump?: string;
     error?: Error;
     done?: boolean;
