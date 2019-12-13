@@ -1,5 +1,5 @@
 
-export interface ActionData {
+export interface IActionData {
   __flows?: {
     jump?: string;
     error?: Error;
@@ -8,28 +8,33 @@ export interface ActionData {
   }
 }
 
-interface HookData {
+interface IHookData {
   flowName: string;
-  input?: ActionData;
-  output?: ActionData;
+  input?: IActionData;
+  output?: IActionData;
   i?: number;
-  actionFn?: action;
+  actionFn?: Action<IActionData>;
   error?: Error;
 }
 
-type action = (data: ActionData, unsafe?: object) => ActionData | Promise<ActionData> | void;
-type hook = (hookData: HookData) => void;
-type supportedHooks = 'pre_action' | 'post_action' | 'pre_flow' | 'post_flow' | 'exception';
+interface IMeta {
+  activated: string[];
+  requestId: string;
+}
+
+type Action<T extends IActionData> = (data: IActionData, unsafe?: object) => T;
+type Hook = (hookData: IHookData) => void;
+type SupportedHooks = 'pre_action' | 'post_action' | 'pre_flow' | 'post_flow' | 'exception';
 
 export class Flows {
-  private hooks: Map<supportedHooks, hook[]> = new Map([
+  private hooks: Map<SupportedHooks, Hook[]> = new Map([
     ['pre_action', []],
     ['post_action', []],
     ['pre_flow', []],
     ['post_flow', []],
     ['exception', []]
   ]);
-  private flows: Map<string, action[]> = new Map();
+  private flows: Map<string, Action<IActionData>[]> = new Map();
 
   constructor() {
     this.executeRepeat = this.executeRepeat.bind(this);
@@ -40,16 +45,16 @@ export class Flows {
    * @param {string} name the name of the flow
    * @param {function[]} actions an array of functions
    */
-  register(name: string, actions: action[]) {
+  register<T>(name: string, actions: Action<T>[]) {
     this.flows.set(name, actions);
   }
 
   /**
    *  add hook
-   * @param {supportedHooks} name the name of the hook
-   * @param {hook} fn the function to execute
+   * @param {SupportedHooks} name the name of the hook
+   * @param {Hook} fn the function to execute
    */
-  hook(name: supportedHooks, fn: hook) {
+  hook(name: SupportedHooks, fn: Hook) {
     if(!this.hooks.has(name)) {
       throw new Error(`Hook ${name} is not a known hook, please read the docs regarding acceptable hooks`)
     }
@@ -65,11 +70,11 @@ export class Flows {
    * @param data the data pass to the flow
    * @param i the index number of the action in the flow
    */
-  private async executeRepeat(flowName: string, data: ActionData, unsafe: any, i: number, meta: any = {}): Promise<ActionData> {
+  private async executeRepeat<T extends IActionData>(flowName: string, data: T, unsafe: object, i: number, meta: Partial<IMeta> = {}): Promise<T> {
     const flow = this.flows.get(flowName);
-    const action: action = flow && flow[i];
-    const actionData: ActionData = JSON.parse(JSON.stringify(data));
-    let nextActionData: ActionData = {__flows: actionData.__flows};
+    const action: Action<T> = flow && flow[i] as Action<T>;
+    const actionData: T = JSON.parse(JSON.stringify(data));
+    let nextActionData: T = {__flows: actionData.__flows} as T;
     let lastFlow = meta.activated ? meta.activated[meta.activated.length - 1] : null;
     
     if(actionData.__flows && actionData.__flows.requestId) {
@@ -100,15 +105,17 @@ export class Flows {
       /** execution */
       const result = await this.flows.get(flowName)[i](actionData, unsafe);
 
+      if(typeof result !== 'object') {
+        throw new Error(`in flow ${flowName} action number ${i} return "${result}" instead of object!\nactions must return object`);
+      }
+      
       Object.assign(nextActionData, result);
 
       /** exception hook */
-    } catch(error) {
+    } catch(error) {     
       this.hooks.get('exception').forEach(fn => fn({flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error}));
-      Object.assign(nextActionData, actionData);
-      Object.assign(nextActionData.__flows, {error});
-
-      return nextActionData;
+      
+      throw error;
     }
 
     /** post_action hook */
@@ -129,17 +136,17 @@ export class Flows {
    * @param {string} flowName 
    * @param {object} input 
    */
-  async execute(flowName: string, input: ActionData, unsafe?: any): Promise<ActionData>  {
-    const data: ActionData = JSON.parse(JSON.stringify(input));
+  execute<T extends IActionData>(flowName: string, input: T, unsafe?: object): Promise<T>  {
+    const data: T = JSON.parse(JSON.stringify(input));
 
     if(!this.flows.has(flowName)) {
       console.warn(`${flowName} flow does not exists! Skipped`);
-      return input;
+      return Promise.resolve(input);
     }
 
     /** pre_flow hook */
     this.hooks.get('pre_flow').forEach(fn => fn({flowName: flowName, input: data}));
 
-    return await this.executeRepeat(flowName, data, unsafe, 0);    
+    return this.executeRepeat<T>(flowName, data, unsafe || {}, 0);    
   }
 }

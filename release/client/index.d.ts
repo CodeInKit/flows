@@ -1,4 +1,4 @@
-export interface ActionData {
+export interface IActionData {
     __flows?: {
         jump?: string;
         error?: Error;
@@ -6,17 +6,17 @@ export interface ActionData {
         requestId?: string;
     };
 }
-interface HookData {
+interface IHookData {
     flowName: string;
-    input?: ActionData;
-    output?: ActionData;
+    input?: IActionData;
+    output?: IActionData;
     i?: number;
-    actionFn?: action;
+    actionFn?: Action<IActionData>;
     error?: Error;
 }
-declare type action = (data: ActionData, unsafe?: object) => ActionData | Promise<ActionData> | void;
-declare type hook = (hookData: HookData) => void;
-declare type supportedHooks = 'pre_action' | 'post_action' | 'pre_flow' | 'post_flow' | 'exception';
+declare type Action<T extends IActionData> = (data: IActionData, unsafe?: object) => T;
+declare type Hook = (hookData: IHookData) => void;
+declare type SupportedHooks = 'pre_action' | 'post_action' | 'pre_flow' | 'post_flow' | 'exception';
 export declare class Flows {
     private hooks;
     private flows;
@@ -26,13 +26,13 @@ export declare class Flows {
      * @param {string} name the name of the flow
      * @param {function[]} actions an array of functions
      */
-    register(name: string, actions: action[]): void;
+    register<T>(name: string, actions: Action<T>[]): void;
     /**
      *  add hook
-     * @param {supportedHooks} name the name of the hook
-     * @param {hook} fn the function to execute
+     * @param {SupportedHooks} name the name of the hook
+     * @param {Hook} fn the function to execute
      */
-    hook(name: supportedHooks, fn: hook): void;
+    hook(name: SupportedHooks, fn: Hook): void;
     /**
      * this method run recursively the flow in order to allow async based function and jump between flows.
      *
@@ -46,6 +46,6 @@ export declare class Flows {
      * @param {string} flowName
      * @param {object} input
      */
-    execute(flowName: string, input: ActionData, unsafe?: any): Promise<ActionData>;
+    execute<T extends IActionData>(flowName: string, input: T, unsafe?: object): Promise<T>;
 }
 export {};

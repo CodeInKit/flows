@@ -22,8 +22,8 @@ class Flows {
     }
     /**
      *  add hook
-     * @param {supportedHooks} name the name of the hook
-     * @param {hook} fn the function to execute
+     * @param {SupportedHooks} name the name of the hook
+     * @param {Hook} fn the function to execute
      */
     hook(name, fn) {
         if (!this.hooks.has(name)) {
@@ -69,14 +69,15 @@ class Flows {
         try {
             /** execution */
             const result = await this.flows.get(flowName)[i](actionData, unsafe);
+            if (typeof result !== 'object') {
+                throw new Error(`in flow ${flowName} action number ${i} return "${result}" instead of object!\nactions must return object`);
+            }
             Object.assign(nextActionData, result);
             /** exception hook */
         }
         catch (error) {
             this.hooks.get('exception').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error }));
-            Object.assign(nextActionData, actionData);
-            Object.assign(nextActionData.__flows, { error });
-            return nextActionData;
+            throw error;
         }
         /** post_action hook */
         this.hooks.get('post_action').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, output: nextActionData }));
@@ -93,15 +94,15 @@ class Flows {
      * @param {string} flowName
      * @param {object} input
      */
-    async execute(flowName, input, unsafe) {
+    execute(flowName, input, unsafe) {
         const data = JSON.parse(JSON.stringify(input));
         if (!this.flows.has(flowName)) {
             console.warn(`${flowName} flow does not exists! Skipped`);
-            return input;
+            return Promise.resolve(input);
         }
         /** pre_flow hook */
         this.hooks.get('pre_flow').forEach(fn => fn({ flowName: flowName, input: data }));
-        return await this.executeRepeat(flowName, data, unsafe, 0);
+        return this.executeRepeat(flowName, data, unsafe || {}, 0);
     }
 }
 exports.Flows = Flows;
