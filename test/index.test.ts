@@ -1,6 +1,8 @@
 import { Flows } from '../src/index';
 import { IActionData } from '../src/index';
 
+// @ts-ignore
+global.console = {warn: jest.fn()}
 
 describe('flow test', () => {
   it('should register flow', () => {
@@ -138,4 +140,22 @@ describe('flow test', () => {
     expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('in flow test_flow action number 1 return "throw me" instead of object!\nactions must return object'))
   });
 
+  it('should throw error when using unknown hook', () => {
+    const flows = new Flows();
+
+    function unknownHook() {
+      // @ts-ignore
+      flows.hook('unknown', () => {});
+    }
+    
+    expect(unknownHook).toThrowError('Hook unknown is not a known hook, please read the docs regarding acceptable hooks')
+  });
+
+  it('should resolve and warn if unknown flow', async () => {
+    const flows = new Flows();
+    const res = await flows.execute('unknown', {someData: 1} as IActionData);
+
+    expect(res).toMatchObject({someData: 1});
+    expect(console.warn).toBeCalledWith('unknown flow does not exists! Skipped');
+  });
 });
