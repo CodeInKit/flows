@@ -1,21 +1,48 @@
-# Flows
+<p align="center">
+  <a href="" rel="noopener">
+    
+  </a>
+</p>
 
-Flows is a library that aim to make writing code concept flow based.
+<h3 align="center">@codeinkit/flows</h3>
 
-## Why Flows?
+<div align="center">
+
+[![Status](https://img.shields.io/badge/status-active-success.svg)]()
+[![GitHub Issues](https://img.shields.io/github/issues/codeinkit/flows.svg)](https://github.com/codeinkit/flows/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/codeinkit/flows.svg)](https://github.com/codeinkit/flows/pulls)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://choosealicense.com/licenses/mit/)
+
+</div>
+
+---
+
+<p align="center"> 
+  Flows is a library that aim to make writing code concept flow based.
+  <br> 
+</p>
+
+## 📝 Table of Contents
+
+- [About](#about)
+- [Getting Started](#getting_started)
+- [Deployment](#deployment)
+- [Usage](#usage)
+- [Built Using](#built_using)
+- [Contributing](#contributing)
+- [Authors](#authors)
+- [Acknowledgments](#acknowledgement)
+
+## 🧐 About <a name = "about"></a>
+
 Usually when writing code we need to build a good architecture in order to scale and maintain our code.
 Nowadays the most common architectures are MVC like, while MVC is great it lack the ability to separate the code
 to readable chunks which make the code harder to maintain and scale when the code grows larger.
 A flow based approach can help keep the architecture clean, and easy to scale.
 When writing in flow base architecture every action (function in flow) can stand by itself, this fact make the code separable which make him also easy to check, debug and develop.
 
-## Installation
+## 🏁 Getting Started <a name = "getting_started"></a>
 
-```
-npm i @codeinkit/flows
-```
-
-## Quick Start
 
 ```js
 const { Flows } = require('@codeinkit/flows');
@@ -49,7 +76,23 @@ flows.execute('flow_name', {});
 
 ```
 
-## flows
+### Prerequisites
+
+[NodeJS](https://nodejs.org/)
+
+### Installing
+
+```
+npm i @codeinkit/flows
+```
+
+## 🔧 Running the tests <a name = "tests"></a>
+
+```
+npm test
+```
+
+## 🎈 Usage <a name="usage"></a>
 there are 2 basic things you can do with flow, register and execute.
 
 ### Flow Registration
@@ -68,11 +111,11 @@ flows.register('flow_name', []);
 flows.execute('flow_name', {});
 ```
 
-## actions
+### actions
 As we discussed earlier an action is a function that exists in flow.
 action can be async, meaning it will return promise that resolve some data, if the promise reject and nothing catch the exception it will be available in the exception hook.
 
-### action
+#### action
 An action have a data parameter, returning from action will move the data to the next action.
 that data that we move through the action must be serializable with `JSON.stringify()`.
 
@@ -84,7 +127,7 @@ function action(data) {
 ```
 action should always return an object if we want to jump to other flow we can use the `__flows` meta data to ask flows to jump.
 
-## hooks
+### hooks
 
 hook registration is done with
 ```js
@@ -107,10 +150,13 @@ the parameters that pass to the hooks are
   * actionFn - the function of the action
   * error - the error of the exception
 
-## Contributing
+## ✍️ Authors <a name = "authors"></a>
+
+- [@amitmtrn](https://github.com/amitmtrn) - Idea & Initial work
+
+## Contributing <a name="contributing"></a>
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
