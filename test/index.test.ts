@@ -112,7 +112,7 @@ describe('flow test', () => {
     flows.register<Partial<IFlow>>('test_flow', [(data) => {throw new Error('test exception')}, (data) => ({...data, other2: true})]);
     flows.hook('exception', hook);
     
-    expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('test exception'))
+    await expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('test exception'))
     expect(hook).toBeCalledTimes(1);
   });
 
@@ -121,7 +121,7 @@ describe('flow test', () => {
     flows.register('test_flow', [(data) => ({...data, __flows: {jump:'other_flow'}})]);
     flows.register('other_flow', [(data) => ({...data, __flows: {jump:'test_flow'}})]);
 
-    expect(flows.execute('test_flow', {initial: true} as IActionData)).rejects.toEqual(new Error('cyclic flow!!, [test_flow, other_flow, test_flow]'))
+    await expect(flows.execute('test_flow', {initial: true} as IActionData)).rejects.toEqual(new Error('cyclic flow!!, [test_flow, other_flow, test_flow]'))
   });
 
   it('should keep the requestId to the end of the flow', async () => {
@@ -132,12 +132,12 @@ describe('flow test', () => {
     expect(response).toMatchObject({somethingElse: 1, __flows: {requestId: '123'}});
   });
 
-  it('should throw if action not returning an object', () => {
+  it('should throw if action not returning an object', async () => {
     const flows = new Flows();
     // @ts-ignore
     flows.register('test_flow', [(data) => ({...data, other: true}), () => 'throw me']);
 
-    expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('in flow test_flow action number 1 return "throw me" instead of object!\nactions must return object'))
+    await expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('in flow test_flow action number 1 return "throw me" instead of object!\nactions must return object'))
   });
 
   it('should throw error when using unknown hook', () => {
