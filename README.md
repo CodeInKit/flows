@@ -35,47 +35,17 @@
 
 ## 🧐 About <a name = "about"></a>
 
-Usually when writing code we need to build a good architecture in order to scale and maintain our code.
-Nowadays the most common architectures are MVC like, while MVC is great it lack the ability to separate the code
-to readable chunks which make the code harder to maintain and scale when the code grows larger.
+When writing code we want to build a good architecture in order to scale and maintain our code.
+
+Nowadays the most common architectures are MVC-like (Model View Controller).
+
+MVC is great, but it lacks the ability to separate the code to readable chunks, which makes the code harder to maintain and scale when it grows larger.
+
 A flow based approach can help keep the architecture clean, and easy to scale.
-When writing in flow base architecture every action (function in flow) can stand by itself, this fact make the code separable which make him also easy to check, debug and develop.
+
+When writing in flow base architecture every action (function in flow) can stand by itself, this fact makes the code separable which also makes it also easy to check, debug and develop.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
-
-
-```js
-const { Flows } = require('@codeinkit/flows');
-const flows = new Flows();
-
-function first_action(flowData) {
-  console.log('action can do simple staff');
-  const variable = 'all variable should be in the function scope (no state outside an action)';
-
-  return {
-    ...flowData,
-    variable: 'returning object will move all the data to the next action in the flow'
-  };
-}
-
-function second_action(flowData) {
-  console.log(flowData.variable);
-}
-
-function third_action(flowData) {
-  console.log('flowData is unique on each action therefore you need to add only serialize variable default serialization use JSON.stringify');
-  
-}
-
-flows.register('flow_name', [first_action, second_action, third_action]);
-flows.hook('pre_action', ({flowName, data, i, actionFn}) => {
-  console.log(data);
-});
-
-flows.execute('flow_name', {});
-
-```
-
 ### Prerequisites
 
 [NodeJS](https://nodejs.org/)
@@ -90,6 +60,54 @@ npm i @codeinkit/flows
 
 ```
 npm test
+```
+### Example
+
+```js
+const { Flows } = require('@codeinkit/flows');
+
+//create the flow
+const flows = new Flows();
+
+//first action
+function first_action(flowData) {
+  console.log('action can do simple staff');
+  const variable = 'all variable should be in the function scope (no state outside an action)';
+  return {
+    ...flowData,
+    variable: 'returning object will move all the data to the next action in the flow'
+  };
+}
+
+//second action
+function second_action(flowData) {
+  console.log(flowData.variable);
+  //this function will throw an exception since it doesn't return an object
+  //return {...flowData}
+}
+
+//third action
+function third_action(flowData) {
+  console.log('flowData is unique on each action therefore you need to add only serialize variable default serialization use JSON.stringify');
+  return {message:'done'};
+}
+
+//register the functions to the flow
+flows.register('flow_name', [first_action, second_action, third_action]);
+
+//register a 'pre_action' hook that will printout the input of each function
+flows.hook('pre_action', ({flowName, input, output, i, actionFn, error}) => {
+  console.log(input);
+});
+
+//register an 'exception' hook that will printout the error
+flows.hook('exception', ({flowName, input, output, i, actionFn, error}) => {
+  console.log(error);
+});
+
+//execute the flow
+flows.execute('flow_name', {});
+
 ```
 
 ## 🎈 Usage <a name="usage"></a>
@@ -111,23 +129,40 @@ flows.register('flow_name', []);
 flows.execute('flow_name', {});
 ```
 
-### actions
-As we discussed earlier an action is a function that exists in flow.
-action can be async, meaning it will return promise that resolve some data, if the promise reject and nothing catch the exception it will be available in the exception hook.
+### Actions
+An action is a function that exists in a flow.
 
-#### action
-An action have a data parameter, returning from action will move the data to the next action.
-that data that we move through the action must be serializable with `JSON.stringify()`.
+An action can be async, meaning it will return promise that resolve some data. If the promise is rejected and nothing catches the exception it will be available in the exception hook.
 
+An action gets data through the 'data' parameter. That data is the data returned from the previous action (or from the flow execution command, if this is the first action).
+
+Actions are required to return an object when it is done (that will be sent to the next action).
+The returned data must be serializable with `JSON.stringify()`.
+
+### The __flows object
+When returning a data object from an action, the action can also pass execution instructions to the flow.
+It does that by adding a "__flows" object to the returned object.
+
+The __flows object supports the following:
+
+  * done - boolean - indicates to the flow execution to end the flow
+  * jump - string - the name of another flow to jump to
+
+#### done example
 ```js
 function action(data) {
+  return {__flows: {done: true}};
+}
+```
 
+#### jump example
+```js
+function action(data) {
   return {__flows: {jump: 'other_flow'}};
 }
 ```
-action should always return an object if we want to jump to other flow we can use the `__flows` meta data to ask flows to jump.
 
-### hooks
+### Hooks
 
 hook registration is done with
 ```js
@@ -136,16 +171,17 @@ flows.hook('hook_name', () => {});
 
 there are 5 types of hooks pre_action, post_action, pre_flow, post_flow, exception.
 
-  * pre_flow - run at the beginning of the flow `flows.hook('pre_flow', ({flowName, data}) => {});`
-  * post_flow - run at the end of the flow `flows.hook('post_flow', ({flowName, data}) => {});`
-  * pre_action - run at the beginning of each action `flows.hook('pre_action', ({flowName, i, actionFn, data}) => {});`
-  * post_action - run at the end of each action  `flows.hook('post_action', ({flowName, i, actionFn, data}) => {});`
-  * exception - run when exception accrue in action `flows.hook('exception', ({flowName, i, actionFn, data, error}) => {});`
+  * pre_flow - run at the beginning of the flow `flows.hook('pre_flow', ({flowName, input}) => {});`
+  * post_flow - run at the end of the flow `flows.hook('post_flow', ({flowName, output}) => {});`
+  * pre_action - run at the beginning of each action `flows.hook('pre_action', ({flowName, i, actionFn, input}) => {});`
+  * post_action - run at the end of each action  `flows.hook('post_action', ({flowName, i, actionFn, input, output}) => {});`
+  * exception - run when exception accrue in action `flows.hook('exception', ({flowName, i, actionFn, input, error}) => {});`
 
 the parameters that pass to the hooks are
 
   * flowName - a string represent the flow name
-  * data - the data that pass from and to action
+  * input - the object provided to the action
+  * output - the object returned by the action
   * i - the index of the action in the flow
   * actionFn - the function of the action
   * error - the error of the exception
