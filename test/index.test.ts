@@ -51,12 +51,15 @@ describe('flow test', () => {
   });
 
   it('should finish flow on done', async () => {
+    const action = jest.fn((data) => ({...data, other2: true}));
     const flows = new Flows();
     interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
-    flows.register<Partial<IFlow>>('test_flow', [(data) => ({...data, other: true, __flows: {done: true}}), (data) => ({...data, other2: true})]);
+    // @ts-ignore
+    flows.register<Partial<IFlow>>('test_flow', [(data) => ({...data, other: true, __flows: {done: true}}), action]);
 
     const response = await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
     expect(response).not.toMatchObject({other2: true});
+    expect(action).not.toBeCalled();
   });
 
   it('should run pre_flow hook only once before the flow start', async () => {

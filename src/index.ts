@@ -114,7 +114,7 @@ export class Flows {
 
       /** exception hook */
     } catch(error) {     
-      this.hooks.get('exception').forEach(fn => fn({flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error}));
+      this.hooks.get('exception').forEach(fn => fn({flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error: error.message || error}));
       
       throw error;
     }
