@@ -71,7 +71,7 @@ const flows = new Flows();
 
 //first action
 function first_action(flowData) {
-  console.log('action can do simple staff');
+  console.log('action can do simple stuff');
   const variable = 'all variable should be in the function scope (no state outside an action)';
   return {
     ...flowData,
