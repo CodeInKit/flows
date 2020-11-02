@@ -47,6 +47,6 @@ export declare class Flows {
      * @param {string} flowName
      * @param {object} input
      */
-    execute<T extends IActionData, R>(flowName: string, input: T, unsafe?: object): Promise<R>;
+    execute<T extends IActionData, S>(flowName: string, input: T, unsafe?: object): Promise<S>;
 }
 export {};
