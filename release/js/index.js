@@ -10,6 +10,7 @@ class Flows {
             ['post_flow', []],
             ['exception', []]
         ]);
+        // private flows: Map<string, Action<IActionData>[]> = new Map()
         this.flows = new Map();
         this.executeRepeat = this.executeRepeat.bind(this);
     }
@@ -62,11 +63,13 @@ class Flows {
             if (!actionData.__flows)
                 actionData.__flows = {};
             actionData.__flows.requestId = meta.requestId;
-            this.hooks.get('post_flow').forEach(fn => fn({ flowName, output: actionData }));
+            this.hooks.get('post_flow').forEach((fn) => fn({ flowName, output: actionData }));
             return actionData;
         }
         /** pre_action hook */
-        this.hooks.get('pre_action').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData }));
+        this.hooks
+            .get('pre_action')
+            .forEach((fn) => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData }));
         try {
             /** execution */
             const result = await this.flows.get(flowName)[i](actionData, unsafe);
@@ -77,11 +80,15 @@ class Flows {
             /** exception hook */
         }
         catch (error) {
-            this.hooks.get('exception').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error: error.message || error }));
+            this.hooks
+                .get('exception')
+                .forEach((fn) => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, error: error.message || error }));
             throw error;
         }
         /** post_action hook */
-        this.hooks.get('post_action').forEach(fn => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, output: nextActionData }));
+        this.hooks
+            .get('post_action')
+            .forEach((fn) => fn({ flowName, i, actionFn: this.flows.get(flowName)[i], input: actionData, output: nextActionData }));
         /** next action */
         if (nextActionData.__flows && nextActionData.__flows.jump) {
             const jumpTo = nextActionData.__flows.jump;
@@ -102,7 +109,7 @@ class Flows {
             return Promise.resolve(input);
         }
         /** pre_flow hook */
-        this.hooks.get('pre_flow').forEach(fn => fn({ flowName: flowName, input: data }));
+        this.hooks.get('pre_flow').forEach((fn) => fn({ flowName: flowName, input: data }));
         return this.executeRepeat(flowName, data, unsafe || {}, 0);
     }
 }

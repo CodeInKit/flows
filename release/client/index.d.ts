@@ -15,7 +15,10 @@ interface IHookData {
     actionFn?: Action<IActionData>;
     error?: Error;
 }
-declare type Action<T extends IActionData> = (data: IActionData, unsafe?: object) => T;
+declare type Action<T extends Partial<IActionData>> = (data: T, unsafe?: object) => Promise<any>;
+declare type ActionList = {
+    [index: number]: Action<Object>;
+};
 declare type Hook = (hookData: IHookData) => void;
 declare type SupportedHooks = 'pre_action' | 'post_action' | 'pre_flow' | 'post_flow' | 'exception';
 export declare class Flows {
@@ -27,7 +30,7 @@ export declare class Flows {
      * @param {string} name the name of the flow
      * @param {function[]} actions an array of functions
      */
-    register<T>(name: string, actions: Action<T>[]): void;
+    register(name: string, actions: ActionList): void;
     /**
      *  add hook
      * @param {SupportedHooks} name the name of the hook
