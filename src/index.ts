@@ -50,6 +50,7 @@ type Hook<T extends IHookData> = (hookData: T) => void;
 type Flow = ((data: IActionData, unsafe: {}) => IActionData | PromiseLike<IActionData>)[];
 
 
+
 export enum SupportedHooks {
   pre_action = 'pre_action',
   post_action = 'post_action',
@@ -190,7 +191,7 @@ export class Flows {
    * @param {string} flowName 
    * @param {object} input 
    */
-  execute<T, S>(flowName: string, input: T, unsafe?: object): S | PromiseLike<S>  {
+  execute<T extends IActionData, S extends IActionData>(flowName: string, input: T, unsafe?: object): S | PromiseLike<S>  {
     // We make sure that data is serializable
     const data: T = JSON.parse(JSON.stringify(input));
 
