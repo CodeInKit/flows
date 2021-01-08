@@ -1,5 +1,4 @@
-import { Flows } from '../src/index';
-import { IActionData } from '../src/index';
+import { Flows, SupportedHooks, IActionData } from '../src/index';
 
 // @ts-ignore
 global.console = {warn: jest.fn()}
@@ -19,7 +18,7 @@ describe('flow test', () => {
     const flows = new Flows();
     flows.register('test_flow', []);
 
-    const response = await flows.execute('test_flow', {initial: true} as IActionData);
+    const response = await flows.execute('test_flow', {initial: true});
     expect(response).toMatchObject({initial: true});
   });
 
@@ -27,7 +26,7 @@ describe('flow test', () => {
     const flows = new Flows();
     flows.register('test_flow', [(data) => ({...data, other: true})]);
 
-    const response = await flows.execute('test_flow', {initial: true} as IActionData);
+    const response = await flows.execute('test_flow', {initial: true});
     expect(response).toMatchObject({initial: true, other: true});
   });
 
@@ -53,11 +52,10 @@ describe('flow test', () => {
   it('should finish flow on done', async () => {
     const action = jest.fn((data) => ({...data, other2: true}));
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
-    // @ts-ignore
-    flows.register<Partial<IFlow>>('test_flow', [(data) => ({...data, other: true, __flows: {done: true}}), action]);
 
-    const response = await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
+    flows.register('test_flow', [(data) => ({...data, other: true, __flows: {done: true}}), action]);
+
+    const response = await flows.execute('test_flow', {initial: true});
     expect(response).not.toMatchObject({other2: true});
     expect(action).not.toBeCalled();
   });
@@ -65,57 +63,57 @@ describe('flow test', () => {
   it('should run pre_flow hook only once before the flow start', async () => {
     const hook = jest.fn(() => {});
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
-    flows.register<Partial<IFlow>>('test_flow', [(data) => ({...data, other: true}), (data) => ({...data, other2: true})]);
-    flows.hook('pre_flow', hook);
+
+    flows.register('test_flow', [(data) => ({...data, other: true}), (data) => ({...data, other2: true})]);
+    flows.hook(SupportedHooks.pre_flow, hook);
     
-    await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
+    await flows.execute('test_flow', {initial: true});
     expect(hook).toBeCalledTimes(1);
   });
 
   it('should run post_flow hook only once after the flow ends', async () => {
     const hook = jest.fn(() => {});
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
-    flows.register<Partial<IFlow>>('test_flow', [(data) => ({...data, other: true}), (data) => ({...data, other2: true})]);
-    flows.hook('post_flow', hook);
+
+    flows.register('test_flow', [(data) => ({...data, other: true}), (data) => ({...data, other2: true})]);
+    flows.hook(SupportedHooks.post_flow, hook);
     
-    await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
+    await flows.execute('test_flow', {initial: true});
     expect(hook).toBeCalledTimes(1);
   });
 
   it('should run pre_action hook before each action', async () => {
     const hook = jest.fn(() => {});
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
+
     const flowToTest = [(data: IActionData) => ({...data, other: true}), (data: IActionData) => ({...data, other2: true})];
-    flows.register<Partial<IFlow>>('test_flow', flowToTest);
-    flows.hook('pre_action', hook);
+    flows.register('test_flow', flowToTest);
+    flows.hook(SupportedHooks.pre_action, hook);
     
-    await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
+    await flows.execute('test_flow', {initial: true});
     expect(hook).toBeCalledTimes(flowToTest.length);
   });
 
   it('should run post_action hook after each action', async () => {
     const hook = jest.fn(() => {});
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
+
     const flowToTest = [(data: IActionData) => ({...data, other: true}), (data: IActionData) => ({...data, other2: true})];
-    flows.register<Partial<IFlow>>('test_flow', flowToTest);
-    flows.hook('post_action', hook);
+    flows.register('test_flow', flowToTest);
+    flows.hook(SupportedHooks.post_action, hook);
     
-    await flows.execute<Partial<IFlow>>('test_flow', {initial: true});
+    await flows.execute('test_flow', {initial: true});
     expect(hook).toBeCalledTimes(flowToTest.length);
   });
 
   it('should run exception hook when function throws', async () => {
     const hook = jest.fn(() => {});
     const flows = new Flows();
-    interface IFlow extends IActionData {initial: boolean,other: boolean, other2: boolean}
-    flows.register<Partial<IFlow>>('test_flow', [(data) => {throw new Error('test exception')}, (data) => ({...data, other2: true})]);
-    flows.hook('exception', hook);
+
+    flows.register('test_flow', [(data) => {throw new Error('test exception')}, (data) => ({...data, other2: true})]);
+    flows.hook(SupportedHooks.exception, hook);
     
-    await expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('test exception'))
+    await expect(flows.execute('test_flow', {initial: true})).rejects.toEqual(new Error('test exception'))
     expect(hook).toBeCalledTimes(1);
   });
 
@@ -140,7 +138,7 @@ describe('flow test', () => {
     // @ts-ignore
     flows.register('test_flow', [(data) => ({...data, other: true}), () => 'throw me']);
 
-    await expect(flows.execute<{}>('test_flow', {initial: true})).rejects.toEqual(new Error('in flow test_flow action number 1 return "throw me" instead of object!\nactions must return object'))
+    await expect(flows.execute('test_flow', {initial: true})).rejects.toEqual(new Error('in flow test_flow action number 1 return "throw me" instead of object!\nactions must return object'))
   });
 
   it('should throw error when using unknown hook', () => {

@@ -5,12 +5,13 @@
   "repository": {
     "url": "https://github.com/CodeInKit/flows"
   },
-  "main": "./release/js/index.js",
-  "types": "./release/definitions/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "gulp",
+    "build": "tsc",
     "test": "jest",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "prepublish": "tsc"
   },
   "keywords": [
     "flow",
@@ -28,12 +29,9 @@
   "devDependencies": {
     "@types/jest": "^24.9.1",
     "@types/node": "^12.19.3",
-    "gulp": "^4.0.2",
-    "gulp-cli": "^2.3.0",
-    "gulp-typescript": "^5.0.1",
     "jest": "^26.6.1",
-    "merge2": "^1.4.1",
     "ts-jest": "^26.4.3",
+    "tsc": "^1.20150623.0",
     "typescript": "^3.9.7"
   }
 }
