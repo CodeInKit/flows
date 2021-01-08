@@ -3,4 +3,3 @@ coverage
 .ideas
 yarn.lock
 .vscode
-dist
