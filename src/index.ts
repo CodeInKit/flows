@@ -47,9 +47,8 @@ interface IMeta {
 }
 
 type Hook<T extends IHookData> = (hookData: T) => void;
-type Flow = ((data: IActionData, unsafe: {}) => IActionData | PromiseLike<IActionData>)[];
-
-
+type Action = <T extends IActionData, U>(data: T, unsafe: U) => unknown | PromiseLike<unknown>;
+type Flow = Action[];
 
 export enum SupportedHooks {
   pre_action = 'pre_action',
@@ -83,7 +82,7 @@ export class Flows {
     return hook;
   }
 
-  private getAction<T extends IActionData, S extends IActionData>(flowName: string, i: number): (data: T, unsafe: {}) => S | PromiseLike<S> {
+  private getAction<T extends IActionData, S extends IActionData, U>(flowName: string, i: number): (data: T, unsafe: U) => S | PromiseLike<S> {
     const flow = this.flows.get(flowName);
     
     if(!Array.isArray(flow) || !flow[i]) {
@@ -127,7 +126,7 @@ export class Flows {
    * @param data the data pass to the flow
    * @param i the index number of the action in the flow
    */
-  private async executeRepeat<T extends IActionData, S extends IActionData>(flowName: string, data: T, unsafe: object, i: number, meta: IMeta = {activated: [], requestId: ''}): Promise<S> {
+  private async executeRepeat<T extends IActionData, S extends IActionData, U>(flowName: string, data: T, unsafe: U, i: number, meta: IMeta = {activated: [], requestId: ''}): Promise<S> {
     const action = this.isActionExists(flowName, i) ? this.getAction(flowName, i) : null;
     const actionData: T = JSON.parse(JSON.stringify(data));
     let nextActionData: S = {__flows: actionData.__flows} as S;
@@ -191,7 +190,7 @@ export class Flows {
    * @param {string} flowName 
    * @param {object} input 
    */
-  execute<T extends IActionData, S extends IActionData>(flowName: string, input: T, unsafe?: object): S | PromiseLike<S>  {
+  execute<T, S, U>(flowName: string, input: T, unsafe?: U): S | PromiseLike<S>  {
     // We make sure that data is serializable
     const data: T = JSON.parse(JSON.stringify(input));
 
@@ -203,6 +202,6 @@ export class Flows {
     /** pre_flow hook */
     this.getHook<IPreFlowHookData<T>>(SupportedHooks.pre_flow).forEach(fn => fn({flowName: flowName, input: data}));
 
-    return this.executeRepeat<T, S>(flowName, data, unsafe || {}, 0);    
+    return this.executeRepeat<T, S, unknown>(flowName, data, unsafe || {}, 0);    
   }
 }

@@ -33,10 +33,10 @@ describe('flow test', () => {
   it('should wait on async action', async () => {
     const flows = new Flows();
     flows.register('test_flow', [(data) => new Promise((resolve) => {
-      setTimeout(() => resolve({...data, other: true} as IActionData), 1);
+      setTimeout(() => resolve({...data, other: true}), 1);
     })]);
 
-    const response = await flows.execute('test_flow', {initial: true} as IActionData);
+    const response = await flows.execute('test_flow', {initial: true});
     expect(response).toMatchObject({initial: true, other: true});
   });
 
@@ -45,7 +45,7 @@ describe('flow test', () => {
     flows.register('test_flow', [(data) => ({...data, __flows: {jump:'other_flow'}})]);
     flows.register('other_flow', [(data) => ({...data, other: true})]);
 
-    const response = await flows.execute('test_flow', {initial: true} as IActionData);
+    const response = await flows.execute('test_flow', {initial: true});
     expect(response).toMatchObject({initial: true, other: true});
   });
 
@@ -122,14 +122,14 @@ describe('flow test', () => {
     flows.register('test_flow', [(data) => ({...data, __flows: {jump:'other_flow'}})]);
     flows.register('other_flow', [(data) => ({...data, __flows: {jump:'test_flow'}})]);
 
-    await expect(flows.execute('test_flow', {initial: true} as IActionData)).rejects.toEqual(new Error('cyclic flow!!, [test_flow, other_flow, test_flow]'))
+    await expect(flows.execute('test_flow', {initial: true})).rejects.toEqual(new Error('cyclic flow!!, [test_flow, other_flow, test_flow]'))
   });
 
   it('should keep the requestId to the end of the flow', async () => {
     const flows = new Flows();
-    flows.register('test_flow', [(data) => ({...data, other: true}), () => ({somethingElse: 1}) as IActionData]);
+    flows.register('test_flow', [(data) => ({...data, other: true}), () => ({somethingElse: 1})]);
 
-    const response = await flows.execute('test_flow', {initial: true, __flows: {requestId: '123'}} as IActionData);
+    const response = await flows.execute('test_flow', {initial: true, __flows: {requestId: '123'}});
     expect(response).toMatchObject({somethingElse: 1, __flows: {requestId: '123'}});
   });
 
@@ -154,7 +154,7 @@ describe('flow test', () => {
 
   it('should resolve and warn if unknown flow', async () => {
     const flows = new Flows();
-    const res = await flows.execute('unknown', {someData: 1} as IActionData);
+    const res = await flows.execute('unknown', {someData: 1});
 
     expect(res).toMatchObject({someData: 1});
     expect(console.warn).toBeCalledWith('unknown flow does not exists! Skipped');

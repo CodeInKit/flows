@@ -11,7 +11,8 @@ interface IHookData {
     flowName: string;
 }
 declare type Hook<T extends IHookData> = (hookData: T) => void;
-declare type Flow = ((data: IActionData, unsafe: {}) => IActionData | PromiseLike<IActionData>)[];
+declare type Action = <T extends IActionData, U>(data: T, unsafe: U) => unknown | PromiseLike<unknown>;
+declare type Flow = Action[];
 export declare enum SupportedHooks {
     pre_action = "pre_action",
     post_action = "post_action",
@@ -51,6 +52,6 @@ export declare class Flows {
      * @param {string} flowName
      * @param {object} input
      */
-    execute<T extends IActionData, S extends IActionData>(flowName: string, input: T, unsafe?: object): S | PromiseLike<S>;
+    execute<T, S, U>(flowName: string, input: T, unsafe?: U): S | PromiseLike<S>;
 }
 export {};
