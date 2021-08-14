@@ -4,7 +4,7 @@
     "strict": true,
     "esModuleInterop": true,
     "declaration": true,
-    "target": "esnext",
+    "target": "es5",
     "noImplicitAny": true,
     "lib": ["dom", "es2015", "es2016"],
     "moduleResolution": "node"
