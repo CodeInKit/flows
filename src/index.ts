@@ -20,20 +20,20 @@ interface IPostFlowHookData<S> extends IHookData {
 interface IPreActionHookData<T, S> extends IHookData {
   input: T;
   i: number;
-  actionFn: (data: T, unsafe: object) => S | PromiseLike<S>;
+  actionFn: Action;
 }
 
 interface IPostActionHookData<T, S> extends IHookData {
   input: T;
   output: S;
   i: number;
-  actionFn: (data: T, unsafe: object) => S | PromiseLike<S>
+  actionFn: Action
 }
 
 interface IExceptionHookData<T, S> extends IHookData {
   input: T;
   i: number;
-  actionFn: (data: T, unsafe: object) => S | PromiseLike<S>;
+  actionFn: Action;
   error: Error;
 }
 
@@ -47,8 +47,8 @@ interface IMeta {
 }
 
 type Hook<T extends IHookData> = (hookData: T) => void;
-type Action = <T extends IActionData, U>(data: T, unsafe: U) => unknown | PromiseLike<unknown>;
-type Flow = Action[];
+export type Action = <T extends IActionData, U>(data: T, unsafe: U) => Promise<unknown>;
+export type Flow = Action[];
 
 export enum SupportedHooks {
   pre_action = 'pre_action',
@@ -82,20 +82,20 @@ export class Flows {
     return hook;
   }
 
-  private getAction<T extends IActionData, S extends IActionData, U>(flowName: string, i: number): (data: T, unsafe: U) => S | PromiseLike<S> {
+  private getAction(flowName: string, i: number): Action {
     const flow = this.flows.get(flowName);
     
     if(!Array.isArray(flow) || !flow[i]) {
       throw new Error('flow does not exists!');
     }
 
-    return flow[i] as unknown as (data: T, unsafe: {}) => S | PromiseLike<S>; 
+    return flow[i]; 
   }
 
   /**
    * register flow
    * @param {string} name the name of the flow
-   * @param {function[]} actions an array of functions
+   * @param {function[]} flow an array of functions
    */
   register(name: string, flow: Flow): void {
     this.flows.set(name, flow);
@@ -191,18 +191,18 @@ export class Flows {
    * @param {string} flowName 
    * @param {object} input 
    */
-  execute<T, S, U>(flowName: string, input: T, unsafe?: U): S | PromiseLike<S>  {
+  execute<T, S, U>(flowName: string, input: T, unsafe?: U): Promise<S>  {
     // We make sure that data is serializable
-    const data: T = JSON.parse(JSON.stringify(input));
+    const data = JSON.parse(JSON.stringify(input));
 
     if(!this.flows.has(flowName)) {
       console.warn(`${flowName} flow does not exists! Skipped`);
-      return JSON.parse(JSON.stringify(input));
+      return Promise.resolve(data);
     }
 
     /** pre_flow hook */
-    this.getHook<IPreFlowHookData<T>>(SupportedHooks.pre_flow).forEach(fn => fn({flowName: flowName, input: data}));
+    this.getHook<IPreFlowHookData<T>>(SupportedHooks.pre_flow).forEach(fn => fn({flowName: flowName, input: data as T}));
 
-    return this.executeRepeat<T, S, unknown>(flowName, data, unsafe || {}, 0);    
+    return this.executeRepeat<T, S, unknown>(flowName, data as T, unsafe || {}, 0);    
   }
 }
