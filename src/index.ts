@@ -116,7 +116,8 @@ export class Flows {
   private isActionExists(flowName: string, i: number): boolean {
     const flow = this.flows.get(flowName);
     
-    return Array.isArray(flow) && {}.toString.call(flow[i]) === '[object Function]';
+    return Array.isArray(flow) 
+      && (({}).toString.call(flow[i]) === '[object Function]' || ({}).toString.call(flow[i]) === '[object AsyncFunction]');
   }
 
   /**
@@ -167,7 +168,7 @@ export class Flows {
 
       /** exception hook */
     } catch(error) {     
-      this.getHook<IExceptionHookData<T, S>>(SupportedHooks.exception).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, error: error.message || error}));
+      this.getHook<IExceptionHookData<T, S>>(SupportedHooks.exception).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, error: error as Error}));
       
       throw error;
     }
