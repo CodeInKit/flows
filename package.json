@@ -1,6 +1,6 @@
 {
   "name": "@codeinkit/flows",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Flows is a library that aim to make writing code concept flow based.",
   "repository": {
     "url": "https://github.com/CodeInKit/flows"
