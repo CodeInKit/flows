@@ -1,79 +1,44 @@
 
-export interface IActionData {
-  __flows?: {
-    flowName?: string;
-    jump?: string;
-    error?: Error;
-    done?: boolean;
-    requestId?: string;
-  }
-}
 
-interface IPreFlowHookData<T> extends IHookData {
-  input: T;
+interface HookInput {
+  [SupportedHooks.PRE_ACTION]: {},
+  [SupportedHooks.POST_ACTION]: {},
+  [SupportedHooks.PRE_FLOW]: {},
+  [SupportedHooks.POST_FLOW]: {},
+  [SupportedHooks.EXCEPTION]: {}
 }
-
-interface IPostFlowHookData<S> extends IHookData {
-  output: S;
-}
-
-interface IPreActionHookData<T, S> extends IHookData {
-  input: T;
-  i: number;
-  actionFn: Action;
-}
-
-interface IPostActionHookData<T, S> extends IHookData {
-  input: T;
-  output: S;
-  i: number;
-  actionFn: Action
-}
-
-interface IExceptionHookData<T, S> extends IHookData {
-  input: T;
-  i: number;
-  actionFn: Action;
-  error: Error;
-}
-
-interface IHookData {
-  flowName: string;
-}
-
-interface IMeta {
-  activated: string[];
-  requestId: string;
-}
-
-type Hook<T extends IHookData> = (hookData: T) => void;
-export type Action = <T extends IActionData, U>(data: T, unsafe: U) => Promise<unknown>;
-export type Flow = Action[];
 
 export enum SupportedHooks {
-  pre_action = 'pre_action',
-  post_action = 'post_action',
-  pre_flow = 'pre_flow',
-  post_flow = 'post_flow',
-  exception = 'exception'
+  PRE_ACTION = 'PRE_ACTION',
+  POST_ACTION = 'POST_ACTION',
+  PRE_FLOW = 'PRE_FLOW',
+  POST_FLOW = 'POST_FLOW',
+  EXCEPTION = 'EXCEPTION'
 }
 
+export type Action<ValueType, ReturnType> = (
+	previousValue: Partial<ValueType>,
+  unsafe: unknown
+) => ReturnType | PromiseLike<ReturnType>;
+
+export type InitialAction<ReturnType> = (data: {}, unsafe: unknown) => ReturnType | PromiseLike<ReturnType>;
+
 export class Flows {
-  private hooks: Map<SupportedHooks, Hook<IHookData>[]> = new Map([
-    [SupportedHooks.pre_action, []],
-    [SupportedHooks.post_action, []],
-    [SupportedHooks.pre_flow, []],
-    [SupportedHooks.post_flow, []],
-    [SupportedHooks.exception, []]
+  private hooks: Map<SupportedHooks, ((v: HookInput) => void)[]> = new Map([
+    [SupportedHooks.PRE_ACTION, []],
+    [SupportedHooks.POST_ACTION, []],
+    [SupportedHooks.PRE_FLOW, []],
+    [SupportedHooks.POST_FLOW, []],
+    [SupportedHooks.EXCEPTION, []]
   ]);
-  private flows: Map<string, Flow> = new Map();
+  private flows: Map<string, Iterable<Action<unknown, unknown>>> = new Map();
 
   constructor() {
     this.executeRepeat = this.executeRepeat.bind(this);
   }
 
-  private getHook<T extends IHookData>(hookName: SupportedHooks):Hook<T>[] {
-    const hook: Hook<T>[] | undefined = this.hooks.get(hookName);
+  private getHook<T extends SupportedHooks>(hookName: T):((v: HookInput[T]) => void)[] {
+    const hook: ((v: HookInput[T]) => void)[] | void = this.hooks.get(hookName);
     
     if(!Array.isArray(hook)) {
       throw new Error(`Hook ${hookName} is not a known hook, please read the docs regarding acceptable hooks`);
@@ -82,7 +47,7 @@ export class Flows {
     return hook;
   }
 
-  private getAction(flowName: string, i: number): Action {
+  private getAction(flowName: string, i: number): Action<{}, {}> {
     const flow = this.flows.get(flowName);
     
     if(!Array.isArray(flow) || !flow[i]) {
@@ -94,19 +59,102 @@ export class Flows {
 
   /**
    * register flow
-   * @param {string} name the name of the flow
-   * @param {function[]} flow an array of functions
    */
-  register(name: string, flow: Flow): void {
+  register(name: string, flow: readonly []): void;
+  register<ReturnType>(name: string, flow: readonly [InitialAction<ReturnType>]): void;
+  register<ValueType1, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ValueType6, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ValueType6>,
+		Action<ValueType6, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ValueType6, ValueType7, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ValueType6>,
+		Action<ValueType6, ValueType7>,
+		Action<ValueType7, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ValueType6, ValueType7, ValueType8, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ValueType6>,
+		Action<ValueType6, ValueType7>,
+		Action<ValueType7, ValueType8>,
+		Action<ValueType8, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ValueType6, ValueType7, ValueType8, ValueType9, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ValueType6>,
+		Action<ValueType6, ValueType7>,
+		Action<ValueType7, ValueType8>,
+		Action<ValueType8, ValueType9>,
+		Action<ValueType9, ReturnType>
+  ]): void;
+  register<ValueType1, ValueType2, ValueType3, ValueType4, ValueType5, ValueType6, ValueType7, ValueType8, ValueType9, ValueType10, ReturnType>(name: string, flow: readonly [
+    InitialAction<ValueType1>,
+		Action<ValueType1, ValueType2>,
+		Action<ValueType2, ValueType3>,
+		Action<ValueType3, ValueType4>,
+		Action<ValueType4, ValueType5>,
+		Action<ValueType5, ValueType6>,
+		Action<ValueType6, ValueType7>,
+		Action<ValueType7, ValueType8>,
+		Action<ValueType8, ValueType9>,
+		Action<ValueType9, ValueType10>,
+		Action<ValueType10, ReturnType>
+  ]): void;
+  register(name: string, flow: Iterable<Action<unknown, unknown>>): void {
     this.flows.set(name, flow);
   }
 
   /**
    *  add hook
-   * @param {SupportedHooks} name the name of the hook
-   * @param {Hook} fn the function to execute
    */
-  hook(name: SupportedHooks, fn: Hook<IHookData>): void {
+  hook<T extends SupportedHooks>(name: T, fn: (v: HookInput[T]) => void): void {
     const hook = this.getHook(name);
 
     hook.push(fn);
@@ -122,43 +170,34 @@ export class Flows {
 
   /**
    * this method run recursively the flow in order to allow async based function and jump between flows.
-   *  
-   * @param flowName the name of the flow
-   * @param data the data pass to the flow
-   * @param i the index number of the action in the flow
    */
-  private async executeRepeat<T extends IActionData, S extends IActionData, U>(flowName: string, data: T, unsafe: U, i: number, meta: IMeta = {activated: [], requestId: ''}): Promise<S> {
+  private async executeRepeat<T extends {$$?: {done?: boolean; jump?: string; }}, S extends {$$?: {done?: boolean; jump?: string; }}, U>(flowName: string, data: T, unsafe: U, i: number, meta: {activated: string[]} = {activated: []}): Promise<S> {
     const action = this.isActionExists(flowName, i) ? this.getAction(flowName, i) : null;
     const actionData: T = JSON.parse(JSON.stringify(data));
-    let nextActionData: S = {__flows: actionData.__flows} as S;
+    let nextActionData: S = {$$: actionData.$$} as S;
     let lastFlow = meta.activated.length > 0 ? meta.activated[meta.activated.length - 1] : null;
     
-    if(actionData.__flows && actionData.__flows.requestId) {
-      meta.requestId = actionData.__flows.requestId;
-    }
-
     if(flowName !== lastFlow && meta.activated.indexOf(flowName) === -1) {
       meta.activated.push(flowName);
     } else if(flowName !== lastFlow) {
       throw new Error(`cyclic flow!!, [${meta.activated.join(', ')}, ${flowName}]`);
     }
 
-    /** post_flow hook */
-    if(!action || (actionData.__flows && actionData.__flows.done)) {
-      if(!actionData.__flows) actionData.__flows = {};
+    /** POST_FLOW hook */
+    if(!action || (actionData.$$ && actionData.$$.done)) {
+      if(!actionData.$$) actionData.$$ = {};
       
-      actionData.__flows.requestId = meta.requestId;
-      this.getHook<IPostFlowHookData<T>>(SupportedHooks.post_flow).forEach(fn => fn({flowName, output: actionData}));
+      this.getHook(SupportedHooks.POST_FLOW).forEach(fn => fn({flowName, output: actionData}));
 
       return JSON.parse(JSON.stringify(actionData));
     }
 
-    /** pre_action hook */
-    this.getHook<IPreActionHookData<T, S>>(SupportedHooks.pre_action).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData}));
+    /** PRE_ACTION hook */
+    this.getHook(SupportedHooks.PRE_ACTION).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData}));
 
     try {
       /** execution */
-      const result = await this.getAction(flowName, i)(actionData, unsafe);
+      const result = await (this.getAction(flowName, i)(actionData, unsafe));
 
       if(typeof result !== 'object') {
         throw new Error(`in flow ${flowName} action number ${i} return "${result}" instead of object!\nactions must return object`);
@@ -166,20 +205,20 @@ export class Flows {
       
       Object.assign(nextActionData, result);
 
-      /** exception hook */
+      /** EXCEPTION hook */
     } catch(error) {     
-      this.getHook<IExceptionHookData<T, S>>(SupportedHooks.exception).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, error: error as Error}));
+      this.getHook(SupportedHooks.EXCEPTION).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, error: error as Error}));
       
       throw error;
     }
 
-    /** post_action hook */
-    this.getHook<IPostActionHookData<T, S>>(SupportedHooks.post_action).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, output: nextActionData}));
+    /** POST_ACTION hook */
+    this.getHook(SupportedHooks.POST_ACTION).forEach(fn => fn({flowName, i, actionFn: this.getAction(flowName, i), input: actionData, output: nextActionData}));
 
     /** next action */
-    if(nextActionData.__flows && nextActionData.__flows.jump ) {
-      const jumpTo = nextActionData.__flows.jump;
-      delete nextActionData.__flows.jump;
+    if(nextActionData.$$ && nextActionData.$$.jump ) {
+      const jumpTo = nextActionData.$$.jump;
+      delete nextActionData.$$.jump;
       return await this.executeRepeat(jumpTo, nextActionData, unsafe, 0, meta);
     }
     
@@ -188,10 +227,8 @@ export class Flows {
 
   /**
    * start the execution process on a registered flow.
-   * @param {string} flowName 
-   * @param {object} input 
    */
-  execute<T, S, U>(flowName: string, input: T, unsafe?: U): Promise<S>  {
+  execute<T extends {$$?: {done?: boolean; jump?: string; }} = {}, S extends {$$?: {done?: boolean; jump?: string; }} = {}, U = {}>(flowName: string, input: T, unsafe?: U): Promise<S>  {
     // We make sure that data is serializable
     const data = JSON.parse(JSON.stringify(input));
 
@@ -200,8 +237,8 @@ export class Flows {
       return Promise.resolve(data);
     }
 
-    /** pre_flow hook */
-    this.getHook<IPreFlowHookData<T>>(SupportedHooks.pre_flow).forEach(fn => fn({flowName: flowName, input: data as T}));
+    /** PRE_FLOW hook */
+    this.getHook(SupportedHooks.PRE_FLOW).forEach(fn => fn({flowName: flowName, input: data as T}));
 
     return this.executeRepeat<T, S, unknown>(flowName, data as T, unsafe || {}, 0);    
   }

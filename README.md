@@ -139,11 +139,11 @@ An action gets data through the 'data' parameter. That data is the data returned
 Actions are required to return an object when it is done (that will be sent to the next action).
 The returned data must be serializable with `JSON.stringify()`.
 
-### The __flows object
+### The $$ object
 When returning a data object from an action, the action can also pass execution instructions to the flow.
-It does that by adding a "__flows" object to the returned object.
+It does that by adding a "$$" object to the returned object.
 
-The __flows object supports the following:
+The $$ object supports the following:
 
   * done - boolean - indicates to the flow execution to end the flow
   * jump - string - the name of another flow to jump to
@@ -151,14 +151,14 @@ The __flows object supports the following:
 #### done example
 ```js
 function action(data) {
-  return {__flows: {done: true}};
+  return {$$: {done: true}};
 }
 ```
 
 #### jump example
 ```js
 function action(data) {
-  return {__flows: {jump: 'other_flow'}};
+  return {$$: {jump: 'other_flow'}};
 }
 ```
 
